@@ -38,6 +38,10 @@ class LearningAgent(Agent):
             self.epsilon, self.alpha = 0, 0
         else:
             self.trial += 1
+            # Unoptimized epsilon decay
+            # self.epsilon -= 0.5
+
+            # Optimized epsilon decay
             self.epsilon = math.e ** (-0.05 * self.trial)
 
         return None
@@ -122,7 +126,7 @@ class LearningAgent(Agent):
 
         # When learning, implement the value iteration update rule
         #   Use only the learning rate 'alpha' (do not use the discount factor 'gamma')
-        self.Q[state][action] += reward*self.alpha
+        self.Q[state][action] += self.alpha * (reward - self.Q[state][action])
 
         return
 
@@ -181,7 +185,7 @@ def run():
     # Flags:
     #   tolerance  - epsilon tolerance before beginning testing, default is 0.05
     #   n_test     - discrete number of testing trials to perform, default is 0
-    sim.run(n_test=15, tolerance=0.003)
+    sim.run(n_test=15, tolerance=0.01)
 
 
 if __name__ == '__main__':
