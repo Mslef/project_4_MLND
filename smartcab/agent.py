@@ -54,7 +54,7 @@ class LearningAgent(Agent):
         # Collect data about the environment
         waypoint = self.planner.next_waypoint() # The next waypoint
         inputs = self.env.sense(self)           # Visual input - intersection light and traffic
-        deadline = self.env.get_deadline(self)  # Remaining deadline
+        # deadline = self.env.get_deadline(self)  # Remaining deadline
 
         # Set 'state' as a tuple of relevant data for the agent
         state = (inputs['light'], inputs['oncoming'], waypoint)
@@ -77,8 +77,9 @@ class LearningAgent(Agent):
             else:
                 if max_val < action_val:
                     max_q = action
+                    max_val = action_val
 
-        return max_q
+        return max_val
 
 
     def create_q(self, state):
@@ -87,7 +88,7 @@ class LearningAgent(Agent):
         # When learning, check if the 'state' is not in the Q-table
         # If it is not, create a new dictionary for that state
         #   Then, for each action available, set the initial Q-value to 0.0
-        if state not in self.Q:
+        if self.learning and state not in self.Q:
             self.Q[state] = {}
             for action in self.valid_actions:
                 self.Q[state][action] = 0.0
@@ -111,10 +112,15 @@ class LearningAgent(Agent):
         if not self.learning:
             action = self.valid_actions[rand]
         else:
+            max_q = self.get_max_q(state)
+            max_q_actions = []
             if random.random() < self.epsilon:
                 action = self.valid_actions[rand]
             else:
-                action = self.get_max_q(state)
+                for action in self.Q[state]:
+                    if self.Q[state][action] == max_q:
+                        max_q_actions.append(action)
+                action = max_q_actions[random.randint(0, len(max_q_actions) - 1)]
 
         return action
 
@@ -126,7 +132,8 @@ class LearningAgent(Agent):
 
         # When learning, implement the value iteration update rule
         #   Use only the learning rate 'alpha' (do not use the discount factor 'gamma')
-        self.Q[state][action] += self.alpha * (reward - self.Q[state][action])
+        if self.learning:
+            self.Q[state][action] += self.alpha * (reward - self.Q[state][action])
 
         return
 
